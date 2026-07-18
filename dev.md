@@ -9,9 +9,10 @@ alternatively, if i cant do the backend download audio from link thing, then it 
 ## what we need to implement
 first things off
 
-- a string matching function, with the ability to check how many characters match in %
+- [X] a string matching function, with the ability to check how many characters match in %
+    - kinda done, but its not in % it's from 0-1
 
-- remove remixes and other shi
+- remove remixes slowed  and other shi
 
 - matching function should match intra-languages (translate characters) 
 
@@ -67,6 +68,8 @@ either painfull insertion of song (not that painfull actually but kinda slow for
 either a middle-ground, easy insert (UX) though still should be slow (ai is slow) full functionalities, but will need double checking (still easier to fix ~50-100 songs then to insert ~500 manually) and much bigger, maybe too big, after some research, defenitelly too big, at least 4 GB RAM at least 1GB (defenetelly more than i expected), and speed wouldn't be that big of an improvement (like 100 songs per 10/15 minutes, i can do that myself)
 
 absolute cinema; absolute trade-offs; we'll go with second variant for now
+
+nuh uh, i decided to coombine, 1 & 2, we will have an automatic script run, but when in encounteres patterns it does not know flag it and stop, also flag a little when it encounteres 
 
 
 

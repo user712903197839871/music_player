@@ -17,7 +17,8 @@
 # freq dict will be made once once on download of song
 # it will lowercase, strip spaces dahses underlines
 
-from enum import Enum, auto  # aparently enums in python need to be imported
+# from enum import Enum, auto  # aparently enums in python need to be imported
+from bst import BST  # i had to build my own bst
 
 
 SKIP_CHARACTERS = {" ", "-", "_"}
@@ -26,22 +27,12 @@ SKIP_CHARACTERS = {" ", "-", "_"}
 # we also add [0.0, 0.1] to this depending on length
 MATCHING_CHARACTERS_PROPORTION = 0.5
 
-LENGHT_EQUAL_RANGE = 3     # max difference between lengths to be considered a weak match
+# LENGHT_EQUAL_RANGE = 3     # max difference between lengths to be considered a weak match
 
 # both below used to calibrate proportion on different lengths
 # cannot add more than 0.1 to proportion, regardless of length
-LENGTH_DEBUFF_CALIBER = -5     # subtracting from smaller length 
-LENGTH_DIVISOR_CALIBER = 10    # dividing adaos by this
-
-
-
-# we have multiple weights of matches
-# a strong match is when characters match and the length is in a small range
-# a weak match is when same letters are there, but the lengths are different
-class Matches(Enum):
-    StrongMatch = auto()
-    WeakMatch = auto()
-    Missmatch = auto()
+# LENGTH_DEBUFF_CALIBER = -5     # subtracting from smaller length 
+# LENGTH_DIVISOR_CALIBER = 10    # dividing adaos by this
 
 
 def get_frequencies(string: str) -> dict[str, int]:
@@ -71,7 +62,7 @@ def get_frequencies(string: str) -> dict[str, int]:
     return frequencies
 
 
-def strings_match(string1: str, string2: str, proportion: float=MATCHING_CHARACTERS_PROPORTION) -> Matches:
+def strings_match(string1: str, string2: str, proportion: float=MATCHING_CHARACTERS_PROPORTION) -> float:
     """
     uses a algorithm to smartly match the strings given a proportion [0, 1]
     (default=MATCHING_CHARACTERS_PROPORTION)
@@ -81,6 +72,7 @@ def strings_match(string1: str, string2: str, proportion: float=MATCHING_CHARACT
     Args:
         string1 & string2 strings to compare
         proportion: the proportion that need to match
+        (Deprecated, using a match formula now)
 
     Returns:
         true if they match, 
@@ -92,17 +84,9 @@ def strings_match(string1: str, string2: str, proportion: float=MATCHING_CHARACT
 
     matching_characters: int = 0
 
-    # we get % of match from the smaller string length
-    # so something like 'track1' will match 'track1: reveb slowed & speed up'
-    comparing_length: int = min(len_str1, len_str2)
-
     # we check case insensitive
     string1 = string1.lower()
     string2 = string2.lower()
-
-
-    # for smaller numbers the proportion is smaller, for bigger numbers, it is larger 
-    proportion = proportion + (max(min(0, comparing_length - LENGTH_DEBUFF_CALIBER), LENGTH_DIVISOR_CALIBER) / LENGTH_DIVISOR_CALIBER**2)
 
 
     frequencies_str1 = get_frequencies(string1)
@@ -114,16 +98,17 @@ def strings_match(string1: str, string2: str, proportion: float=MATCHING_CHARACT
         if c in frequencies_str2:
             matching_characters += min(frequencies_str1[c], frequencies_str2[c])
 
-    matching = (matching_characters / comparing_length) >= proportion
 
-    if matching and len_str1 == len_str2:
-        return Matches.StrongMatch
-    
-    elif matching and abs(len_str1 - len_str2) <= LENGHT_EQUAL_RANGE:
-        return Matches.WeakMatch
-    
-    else:
-        return Matches.Missmatch
+    # for smaller numbers the proportion is smaller, for bigger numbers, it is larger 
+    # proportion = proportion + (max(min(0, comparing_length - LENGTH_DEBUFF_CALIBER), LENGTH_DIVISOR_CALIBER) / LENGTH_DIVISOR_CALIBER**2)
+    # (matching_characters / comparing_length) >= proportion
+
+    matching_score = (matching_characters / max(len_str1, len_str2))
+    length_penalty = (min(len_str1, len_str2) / max(len_str1, len_str2))
+
+    return matching_score * length_penalty
+
+
 
 # "lost souls"
 # "Baby Shark",
@@ -137,7 +122,7 @@ def strings_match(string1: str, string2: str, proportion: float=MATCHING_CHARACT
 # "Achy Breaky Heart",
 # "Ice Ice Baby"
 
-test: str = "Aur"
+test: str = "tree"
 
 arr = [
     "Bohemian Rhapsody", "Like a Rolling Stone", "Billie Jean", "Stayin Alive", "Purple Rain",
@@ -163,15 +148,32 @@ arr = [
     "Velouria", "Allison","Dig for Fire", "Here Comes the Sun", "Something"
 ]
 
+real = [
+    "Try", "Captain", "Aura", "Look at the Scars", "Narrative", "Bismarck", "Tantra", 
+    "Prayers", "Hola Señorita", "Que que tu m'aimes ?", "Alors on danse", "Love Story",
+    "On The Floor", "Amazing", "In Da Club", "Chantaje", "No Lie", "Mi Gente",
+    "Taki Taki", "In Love", "Faded", "Angel", "Lean On", "Caliente",
+    "In And Out Of Love", "Rainy Day", "X.O", "Despacito", "Sorry", "URUS", "Banger",
+    "Весна", "When I Win", "Minor", "Marlboro", "DINERO", "Fire Man", "OneLove",
+    "Last of Us"
+]
+
+sorted_matches: BST = BST(comparator=lambda a, b: a[0] < b[0])
+
+for s in real:
+    match_score: float = strings_match(test, s)
+
+    sorted_matches.insert([match_score, s])
+
 for s in arr:
-    match: Matches = strings_match(test, s)
-    if match == Matches.StrongMatch:
-        print(f"===== '{test}'  MATCHES  '{s}' =====")
-    elif match == Matches.WeakMatch:
-        print(f"'{test}'  weak match  '{s}'")
+    match_score: float = strings_match(test, s)
+
+    sorted_matches.insert([match_score, s])
 
 
+sorted_matches.in_order(func=sorted_matches.print_node, limit=10)
 
+print(f"\ncompared for '{test}'")
 
 
 
@@ -289,4 +291,57 @@ Miyagi & Эндшпиль - OneLove (Lyric video)/ Andy Panda
 Miyagi - Настырный (Lyric video)
 Miyagi & Эндшпиль - Last of Us (Official Audio)
 Элджей & Кравц - Дисконнект
+
+
+
+
+
+
+
+
+Дама
+Весна
+Колизей
+Голгофа
+Письмо домой
+Я хочу любить
+Патрон
+Родная Пой
+Ратата
+Это все она
+Держи
+Именно та
+До рассвета
+Баклажан
+Витаминка
+Бродяга
+МОКРЫЕ КРОССЫ
+Незабудка
+Улыбайся
+Титры
+Юность
+Цвет настроения черный
+Не родись красивой
+Наедине
+Чёрные глаза
+Потрачу
+Птичка
+Дисконнект
+Лейла
+Выше
+ПОЙДЕТ
+На белом
+Санавабич
+В последний раз
+НЕ ЖАЛЬ
+Наследство
+Грустная Песня
+Родная Пой
+Там Ревели Горы 
+Настырный
+Дисконнект
+
+
+
+
 """
