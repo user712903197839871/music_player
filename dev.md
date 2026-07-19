@@ -10,7 +10,7 @@ alternatively, if i cant do the backend download audio from link thing, then it 
 first things off
 
 - [X] a string matching function, with the ability to check how many characters match in %
-    - kinda done, but its not in % it's from 0-1
+    - kinda done, but its not in % it's from 1-1+min-words
 
 - remove remixes slowed  and other shi
 

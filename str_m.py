@@ -27,8 +27,15 @@ SKIP_CHARACTERS = {" ", "-", "_"}
 # we also add [0.0, 0.1] to this depending on length
 MATCHING_CHARACTERS_PROPORTION = 0.5
 
-# LENGHT_EQUAL_RANGE = 3     # max difference between lengths to be considered a weak match
 
+# meaning add 100% more score for each words that matches perfectly
+WORD_MATCH_MULTIPLIER = 1
+# meaning that if a str matches all of its words, 
+# multiply by additional (WORD_MATCH_MULTIPLIER*2)%
+FULL_STRING_WORD_MATCH_BUFF = WORD_MATCH_MULTIPLIER * 2
+
+
+# LENGHT_EQUAL_RANGE = 3     # max difference between lengths to be considered a weak match
 # both below used to calibrate proportion on different lengths
 # cannot add more than 0.1 to proportion, regardless of length
 # LENGTH_DEBUFF_CALIBER = -5     # subtracting from smaller length 
@@ -61,6 +68,38 @@ def get_frequencies(string: str) -> dict[str, int]:
 
     return frequencies
 
+
+def get_matching_words(s1: str, s2: str) -> float:
+    """
+    counts word matches between s1&s2 in O(n)
+    if all words from s1 or s2 match with the other, we give a FULL_STRING_WORD_MATCH_BUFF buff
+
+    Returns:
+        a float [1, 1+min_words] 
+        where each WORD_MATCH_MULTIPLIER step represents a word match
+        it is a number representing %, multiplies score at the end
+    """
+    # we start the counter at 0, but add 1 at the end!
+    # we multiply the score by this number, 
+    # 1 means no change 1.1 means +10% score, 2 means +200% score etc.
+    words_match: float = 0
+
+    set_1: set[str] = set(s1.split(' '))
+    set_2: set[str] = set(s2.split(' '))
+
+    for word in set_1:
+        if word in set_2:
+            words_match += 1
+
+    if words_match == len(set_1) or words_match == len(set_2):
+        words_match += FULL_STRING_WORD_MATCH_BUFF
+
+    # convert into % or in however we buff words mathces
+    words_match /= WORD_MATCH_MULTIPLIER
+
+    # we add 1, meaning if no matches we multiply by 1
+    return words_match + 1
+    
 
 def strings_match(string1: str, string2: str, proportion: float=MATCHING_CHARACTERS_PROPORTION) -> float:
     """
@@ -99,14 +138,14 @@ def strings_match(string1: str, string2: str, proportion: float=MATCHING_CHARACT
             matching_characters += min(frequencies_str1[c], frequencies_str2[c])
 
 
-    # for smaller numbers the proportion is smaller, for bigger numbers, it is larger 
     # proportion = proportion + (max(min(0, comparing_length - LENGTH_DEBUFF_CALIBER), LENGTH_DIVISOR_CALIBER) / LENGTH_DIVISOR_CALIBER**2)
     # (matching_characters / comparing_length) >= proportion
 
     matching_score = (matching_characters / max(len_str1, len_str2))
     length_penalty = (min(len_str1, len_str2) / max(len_str1, len_str2))
+    word_match_buff = get_matching_words(string1, string2)
 
-    return matching_score * length_penalty
+    return matching_score * length_penalty * word_match_buff
 
 
 
@@ -122,7 +161,7 @@ def strings_match(string1: str, string2: str, proportion: float=MATCHING_CHARACT
 # "Achy Breaky Heart",
 # "Ice Ice Baby"
 
-test: str = "tree"
+test: str = "Imagene"
 
 arr = [
     "Bohemian Rhapsody", "Like a Rolling Stone", "Billie Jean", "Stayin Alive", "Purple Rain",
@@ -173,7 +212,7 @@ for s in arr:
 
 sorted_matches.in_order(func=sorted_matches.print_node, limit=10)
 
-print(f"\ncompared for '{test}'")
+print(f"\ncompared for '{test}' in both")
 
 
 
