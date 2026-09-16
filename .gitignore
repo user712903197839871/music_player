@@ -1,5 +1,11 @@
-# for any eventuality 
 .env 
+# for any eventuality 
 *.mp3
 *.mp4
 *.exe
+
+# just a visualizing file
+db/schema.json
+
+# claude small syntax guide to refresh my memory
+python-for-cpp-devs.md
